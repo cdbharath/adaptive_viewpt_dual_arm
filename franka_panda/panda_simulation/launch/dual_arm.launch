@@ -1,0 +1,57 @@
+<launch>
+    <!-- GAZEBO arguments -->
+    <arg name="paused" default="false" />
+    <arg name="use_sim_time" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="headless" default="false" />
+    <arg name="debug" default="false" />
+    <arg name="load_gripper" default="true" />
+
+    <!--launch GAZEBO with own world configuration -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <!-- <arg name="world_name" value="$(find robotics_assisted_tomography)/worlds/tomography.world"/> -->
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="use_sim_time" value="$(arg use_sim_time)" />
+        <arg name="headless" value="$(arg headless)" />
+    </include>
+
+    <!-- <node name="map_world_frame" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map world 100" />
+    <node name="world_panda_frame" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 world panda_link0 100" />   -->
+
+    <group ns="panda1">
+        <rosparam file="$(find panda_simulation)/config/effort_control.yaml" command="load" />
+        <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_camera.urdf.xacro" />
+        <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda1" />
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_joint1_controller panda_joint2_controller panda_joint3_controller panda_joint4_controller panda_joint5_controller panda_joint6_controller panda_joint7_controller" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+        <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
+        <node pkg="controller_manager" type="spawner" name="joint_position_launcher2" args="panda_finger1_controller panda_finger2_controller" />
+    </group>
+
+    <group ns="panda2">
+        <rosparam file="$(find panda_simulation)/config/effort_control.yaml" command="load" />
+        <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
+        <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -y 1 -model panda2" />
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_arm_controller"/>
+        <node name="controller_spawner1" pkg="controller_manager" type="spawner" args="panda_finger1_controller panda_finger2_controller"/>
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+        <include file="$(find panda_moveit_config)/launch/planning_context.launch">
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
+        <include file="$(find panda_moveit_config)/launch/move_group.launch">
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
+        <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
+        <node pkg="panda_simulation" type="robot_control_node" name="robot_control_node" output="screen" />
+    </group>
+
+    <!-- for web interface -->
+    <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="port" value="9090" />
+    </include>
+
+    <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" /> -->
+
+</launch>
