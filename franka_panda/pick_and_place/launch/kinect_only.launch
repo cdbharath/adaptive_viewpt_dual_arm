@@ -39,6 +39,6 @@
     <!-- <node name="spawn_screw_driver" pkg="gazebo_ros" type="spawn_model" args="-file $(find pick_and_place)/urdf/objects/screw_driver/screw_driver.urdf -x 0.5 -urdf -model screw_driver" output="screen"/>  -->
     <!-- <node name="spawn_tennis_ball" pkg="gazebo_ros" type="spawn_model" args="-file $(find pick_and_place)/urdf/objects/tennis_ball/tennis_ball.urdf -x 0.5 -urdf -model tennis_ball" output="screen"/>  -->
 
-    <node name="spawn_aruco" pkg="gazebo_ros" type="spawn_model" args="-file $(find aruco_ros)/urdf/aruco_visual_marker_0/model.sdf -x 0.25 -sdf -model aruco" output="screen"/> 
+    <node name="spawn_aruco" pkg="gazebo_ros" type="spawn_model" args="-file $(find aruco_ros)/urdf/aruco_visual_marker_0/model.sdf -x 0.5 -sdf -model aruco" output="screen"/> 
     
 </launch>

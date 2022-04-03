@@ -53,5 +53,7 @@
     </include>
 
     <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" /> -->
+    <node name="spawn_aruco" pkg="gazebo_ros" type="spawn_model" args="-file $(find aruco_ros)/urdf/aruco_visual_marker_0/model.sdf -x 0.5 -sdf -model aruco" output="screen"/> 
+
 
 </launch>
