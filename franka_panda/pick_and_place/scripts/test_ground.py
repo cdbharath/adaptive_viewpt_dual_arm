@@ -4,6 +4,9 @@ import rospy
 from pick_and_place_module.pick_and_place import PickAndPlace
 from std_msgs.msg import Float64
 from math import pi
+import os
+
+os.environ["ROS_NAMESPACE"] = "panda2"
 
 def debug():
     pick_and_place = PickAndPlace(0.05, 0.5)
