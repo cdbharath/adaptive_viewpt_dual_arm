@@ -140,6 +140,8 @@ public:
    */
   cv::Point2f getCenter() const;
 
+  std::vector<cv::Point2f> getCorners() const;
+
   /**
    * Returns the perimeter of the marker
    */

@@ -413,6 +413,25 @@ cv::Point2f Marker::getCenter() const
   return cent;
 }
 
+std::vector<cv::Point2f> Marker::getCorners() const
+{
+  std::vector<cv::Point2f> corner_vector;
+
+  cv::Point2f corner1((*this)[0].x, (*this)[0].y);
+  corner_vector.push_back(corner1);
+
+  cv::Point2f corner2((*this)[1].x, (*this)[1].y);
+  corner_vector.push_back(corner2);
+
+  cv::Point2f corner3((*this)[2].x, (*this)[2].y);
+  corner_vector.push_back(corner3);
+
+  cv::Point2f corner4((*this)[3].x, (*this)[3].y);
+  corner_vector.push_back(corner4);
+
+  return corner_vector;
+}
+
 /**
  */
 float Marker::getArea() const

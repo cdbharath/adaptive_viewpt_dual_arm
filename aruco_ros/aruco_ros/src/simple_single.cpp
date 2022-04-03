@@ -67,6 +67,12 @@ private:
   ros::Publisher position_pub;
   ros::Publisher marker_pub; // rviz visualization marker
   ros::Publisher pixel_pub;
+
+  ros::Publisher corner1;
+  ros::Publisher corner2;
+  ros::Publisher corner3;
+  ros::Publisher corner4;
+
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
@@ -135,6 +141,12 @@ public:
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
     marker_pub = nh.advertise<visualization_msgs::Marker>("marker", 10);
     pixel_pub = nh.advertise<geometry_msgs::PointStamped>("pixel", 10);
+
+    // Publish corners of the aruco tag 
+    corner1 = nh.advertise<geometry_msgs::PointStamped>("corner1", 10);
+    corner2 = nh.advertise<geometry_msgs::PointStamped>("corner2", 10);
+    corner3 = nh.advertise<geometry_msgs::PointStamped>("corner3", 10);
+    corner4 = nh.advertise<geometry_msgs::PointStamped>("corner4", 10);
 
     nh.param<double>("marker_size", marker_size, 0.05);
     nh.param<int>("marker_id", marker_id, 300);
@@ -248,6 +260,35 @@ public:
             pixelMsg.point.y = markers[i].getCenter().y;
             pixelMsg.point.z = 0;
             pixel_pub.publish(pixelMsg);
+
+            // publish corners
+            // geometry_msgs::PointStamped pixelMsg;
+            pixelMsg.header = transformMsg.header;
+            pixelMsg.point.x = (markers[i].getCorners())[0].x;
+            pixelMsg.point.y = (markers[i].getCorners())[0].y;
+            pixelMsg.point.z = 0;
+            corner1.publish(pixelMsg);
+
+            // geometry_msgs::PointStamped pixelMsg;
+            pixelMsg.header = transformMsg.header;
+            pixelMsg.point.x = (markers[i].getCorners())[1].x;
+            pixelMsg.point.y = (markers[i].getCorners())[1].y;
+            pixelMsg.point.z = 0;
+            corner2.publish(pixelMsg);
+
+            // geometry_msgs::PointStamped pixelMsg;
+            pixelMsg.header = transformMsg.header;
+            pixelMsg.point.x = (markers[i].getCorners())[2].x;
+            pixelMsg.point.y = (markers[i].getCorners())[2].y;
+            pixelMsg.point.z = 0;
+            corner3.publish(pixelMsg);
+
+            // geometry_msgs::PointStamped pixelMsg;
+            pixelMsg.header = transformMsg.header;
+            pixelMsg.point.x = (markers[i].getCorners())[3].x;
+            pixelMsg.point.y = (markers[i].getCorners())[3].y;
+            pixelMsg.point.z = 0;
+            corner4.publish(pixelMsg);
 
             // publish rviz marker representing the ArUco marker patch
             visualization_msgs::Marker visMarker;
