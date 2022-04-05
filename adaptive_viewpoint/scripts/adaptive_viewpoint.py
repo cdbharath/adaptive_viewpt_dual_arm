@@ -80,7 +80,6 @@ class VisualServoing:
     def controller_cb(self, data):
     
         # Calculate transfomation matrices using DH parameters
-        
         # Refer: https://frankaemika.github.io/docs/control_parameters.html 
         # in order: a d alpha theta
         dh_parameters = [[0, 0.333, 0, self.joint_angles[0]],
@@ -112,21 +111,49 @@ class VisualServoing:
 
         # Calculate feature jacobian
         z = 1
-
         corner_feature_jacobians = []
         for i, corner in enumerate(self.corners):
             corner_feature_jacobian = np.array([[-1/z, 0, self.corners[i][0]/z, self.corners[i][0]*self.corners[i][1], -(1+self.corners[i][0]*self.corners[i][0]), self.corners[i][1]],
                                                 [0, -1/z, self.corners[i][1]/z, 1+self.corners[i][1]*self.corners[i][1], -self.corners[i][0]*self.corners[i][1], -self.corners[i][0]]])
 
             corner_feature_jacobians.append(corner_feature_jacobian)
-        
         image_jacobian = np.vstack(corner_feature_jacobians)
 
         # Calculate robot jacobian
         # TODO
+        robot_jacobian = None
 
+        # TODO shift control parameters to a good place
+        # Control law
+        lam = 0.01
+        lam_mat = np.eye(6)*lam
 
-        
+        error = np.array([[self.corners[0][0] - self.reference_corners[0][0]],
+                          [self.corners[0][1] - self.reference_corners[0][1]],
+                          [self.corners[1][0] - self.reference_corners[1][0]],
+                          [self.corners[1][1] - self.reference_corners[1][1]],
+                          [self.corners[2][0] - self.reference_corners[2][0]],
+                          [self.corners[2][1] - self.reference_corners[2][1]],
+                          [self.corners[3][0] - self.reference_corners[3][0]],
+                          [self.corners[3][1] - self.reference_corners[3][1]]])
+
+        # matrix sizes:
+        # error: 8x1
+        # image_jacobian: 8x6
+        # reference_cartesian_velocities: 6x1  
+        # robot_jacobian: 6x7
+        # input_joint_velocities: 7x1   
+        reference_cartesian_velocities = np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
+        input_joint_velocities = np.dot(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
+
+        # TODO chech mapping
+        pub_q1_vel.publish(input_joint_velocities[0])
+        pub_q2_vel.publish(input_joint_velocities[1])
+        pub_q3_vel.publish(input_joint_velocities[2])
+        pub_q4_vel.publish(input_joint_velocities[3])
+        pub_q5_vel.publish(input_joint_velocities[4])
+        pub_q6_vel.publish(input_joint_velocities[5])
+        pub_q7_vel.publish(input_joint_velocities[6])
 
 if __name__ == "__main__":
     pass
