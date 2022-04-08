@@ -30,7 +30,7 @@
         <node pkg="controller_manager" type="spawner" name="joint_position_launcher2" args="panda_finger1_controller panda_finger2_controller" />
     </group>
 
-    <group ns="panda2">
+    <!-- <group ns="panda2">
         <rosparam file="$(find panda_simulation)/config/effort_control.yaml" command="load" />
         <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
         <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -y 1 -model panda2" />
@@ -44,8 +44,7 @@
             <arg name="load_gripper" value="$(arg load_gripper)" />
         </include>
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
-        <node pkg="panda_simulation" type="robot_control_node" name="robot_control_node" output="screen" />
-    </group>
+    </group> -->
 
     <!-- for web interface -->
     <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
