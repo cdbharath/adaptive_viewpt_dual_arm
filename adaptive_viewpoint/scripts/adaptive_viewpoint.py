@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
-# Author: Bharath Kumar Ramesh Babu
+# Author: Bharath Kumar Ramesh Babu, Akshay Kumar Harikrishnan, Harishkumar Ramdhas
 # Email: brameshbabu@wpi.edu
 
 import rospy
@@ -17,7 +17,7 @@ from geometry_msgs.msg import PointStamped
 
 class VisualServoing:
     def __init__(self):
-        rospy.init_node('visual_SErvoing')
+        rospy.init_node('visual_Servoing')
 
         self.bridge = CvBridge()
         self.joint_angles = np.array([0, 0, 0, 0, 0, 0, 0])
@@ -36,15 +36,13 @@ class VisualServoing:
         rospy.Subscriber('corner3', Float64, self.corner3_cb)
         rospy.Subscriber('corner4', Float64, self.corner4_cb)
 
-        # TODO change names accordingly
-        # TODO change to velocity controller
-        pub_q1_vel = rospy.Publisher('/panda1/joint1_velocity_controller/command', Float64, queue_size=10)
-        pub_q2_vel = rospy.Publisher('/panda1/joint2_velocity_controller/command', Float64, queue_size=10)
-        pub_q3_vel = rospy.Publisher('/panda1/joint3_velocity_controller/command', Float64, queue_size=10)
-        pub_q4_vel = rospy.Publisher('/panda1/joint4_velocity_controller/command', Float64, queue_size=10)
-        pub_q5_vel = rospy.Publisher('/panda1/joint5_velocity_controller/command', Float64, queue_size=10)
-        pub_q6_vel = rospy.Publisher('/panda1/joint6_velocity_controller/command', Float64, queue_size=10)
-        pub_q7_vel = rospy.Publisher('/panda1/joint7_velocity_controller/command', Float64, queue_size=10)
+        pub_q1_vel = rospy.Publisher('/panda1/panda_joint1_controller/command', Float64, queue_size=10)
+        pub_q2_vel = rospy.Publisher('/panda1/panda_joint2_controller/command', Float64, queue_size=10)
+        pub_q3_vel = rospy.Publisher('/panda1/panda_joint3_controller/command', Float64, queue_size=10)
+        pub_q4_vel = rospy.Publisher('/panda1/panda_joint4_controller/command', Float64, queue_size=10)
+        pub_q5_vel = rospy.Publisher('/panda1/panda_joint5_controller/command', Float64, queue_size=10)
+        pub_q6_vel = rospy.Publisher('/panda1/panda_joint6_controller/command', Float64, queue_size=10)
+        pub_q7_vel = rospy.Publisher('/panda1/panda_joint7_controller/command', Float64, queue_size=10)
 
         rospy.Timer(rospy.Duration(0.1), self.controller_cb)
 
@@ -52,14 +50,13 @@ class VisualServoing:
         self.image = self.bridge.imgmsg_to_cv2(data, desired_encoding="rgb8")
 
     def joint_state_cb(self, data):
-        # TODO check mapping 
-        self.joint_angles[0] = data.position[0]
-        self.joint_angles[1] = data.position[1]
-        self.joint_angles[2] = data.position[2]
-        self.joint_angles[3] = data.position[3]
-        self.joint_angles[4] = data.position[4]
-        self.joint_angles[5] = data.position[5]
-        self.joint_angles[6] = data.position[6]
+        self.joint_angles[0] = data.position[2]
+        self.joint_angles[1] = data.position[3]
+        self.joint_angles[2] = data.position[4]
+        self.joint_angles[3] = data.position[5]
+        self.joint_angles[4] = data.position[6]
+        self.joint_angles[5] = data.position[7]
+        self.joint_angles[6] = data.position[8]
 
     def corner1_cb(self, data):
         self.corners[0][0] = data.point.x 
@@ -93,10 +90,7 @@ class VisualServoing:
         a = []
         transformations = []        
         for dh_parameter in dh_parameters:
-            a = dh_parameter[0]
-            d = dh_parameter[1]
-            alpha = dh_parameter[2]
-            theta = dh_parameter[3]
+            a, d, alpha, theta = dh_parameter[0], dh_parameter[1], dh_parameter[2], dh_parameter[3] 
 
             ai = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
                            [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
@@ -107,8 +101,22 @@ class VisualServoing:
                 transformations.append(np.dot(transformations[-1], ai))
             else:
                 transformations.append(ai)
-        # TODO add camera transformation
+        
+        # Camera transformation
+        # Transformations in order xyzrpy
+        camera_xyzrpy = [[0.05, -0.05, 0, -1.57, -1.57, -0.789], 
+                         [0, 0, 0, -1.57, 0, -1.57]]
+        
+        for xyzrpy in camera_xyzrpy:
+            x, y, z, R, P, Y = xyzrpy[0], xyzrpy[1], xyzrpy[2], xyzrpy[3], xyzrpy[4], xyzrpy[5]
+            cam_t = np.array([[np.cos(Y)*np.cos(Z), np.sin(X)*np.sin(Y)*np.cos(Z) - np.cos(X)*np.sin(Z), np.cos(X)*np.sin(Y)*np.cos(Z) + np.sin(X)*np.sin(Z), x],
+                              [np.cos(Y)*np.sin(Z), np.sin(X)*np.sin(Y)*np.sin(Z) + np.cos(X)*np.cos(Z), np.cos(X)*np.sin(Y)*np.sin(Z) - np.sin(X)*np.cos(Z), y],
+                              [-np.sin(Y), np.sin(X)*np.cos(Y), np.cos(X)*np.cos(Y), z],
+                              [0, 0, 0, 1]])
 
+            a.append(cam_t)
+            transformations.append(np.dot(transformations[-1], cam_t))
+        
         # Calculate feature jacobian
         z = 1
         corner_feature_jacobians = []
@@ -120,10 +128,22 @@ class VisualServoing:
         image_jacobian = np.vstack(corner_feature_jacobians)
 
         # Calculate robot jacobian
-        # TODO
         robot_jacobian = None
 
-        # TODO shift control parameters to a good place
+        for i in range(len(dh_parameters)):
+            if i == 0:
+                joint_av = np.array([[0],[0],[1]])
+                joint_lv = np.cross(np.array([[0],[0],[1]]), np.array([[transformations[len(dh_parameters) - 1][0][3]],[transformations[len(dh_parameters) - 1][1][3]],[transformations[len(dh_parameters) - 1][2][3]]]), axis=0)
+                
+                joint_jacobain = np.vstack((joint_lv,joint_av))
+
+            else:                                
+                joint_av = np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]])
+                joint_lv = np.cross(np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]]), np.array([[transformations[len(dh_parameters) - 1][0][3]],[transformations[len(dh_parameters) - 1][1][3]],[v[2][3]]]) - np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]]), axis=0)
+
+                joint_jacobain = np.vstack((joint_lv,joint_av))
+                robot_jacobian = np.hstack((robot_jacobian, joint_jacobain))
+
         # Control law
         lam = 0.01
         lam_mat = np.eye(6)*lam
@@ -146,7 +166,6 @@ class VisualServoing:
         reference_cartesian_velocities = np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
         input_joint_velocities = np.dot(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
 
-        # TODO chech mapping
         pub_q1_vel.publish(input_joint_velocities[0])
         pub_q2_vel.publish(input_joint_velocities[1])
         pub_q3_vel.publish(input_joint_velocities[2])
