@@ -25,6 +25,7 @@
         <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_camera.urdf.xacro" />
         <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda1" />
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_joint1_controller panda_joint2_controller panda_joint3_controller panda_joint4_controller panda_joint5_controller panda_joint6_controller panda_joint7_controller" />
+        <node name="controller_spawner_position" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped panda_joint1_pcontroller panda_joint2_pcontroller panda_joint3_pcontroller panda_joint4_pcontroller panda_joint5_pcontroller panda_joint6_pcontroller panda_joint7_pcontroller" />
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
         <node pkg="controller_manager" type="spawner" name="joint_position_launcher2" args="panda_finger1_controller panda_finger2_controller" />
