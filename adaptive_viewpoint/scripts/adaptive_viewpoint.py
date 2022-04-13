@@ -20,29 +20,29 @@ class VisualServoing:
         rospy.init_node('visual_Servoing')
 
         self.bridge = CvBridge()
-        self.joint_angles = np.array([0, 0, 0, 0, 0, 0, 0])
-        self.corners = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
+        self.joint_angles = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.corners = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
 
         # give a proper value
-        self.reference_corners = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
+        self.reference_corners = np.array([[609.0, 632.0], [603.0, 572.0], [663.0, 566.0], [670.0, 625.0]])
         self.image = None
 
         rospy.Subscriber('/panda_camera/rgb/image_raw', Image, self.image_cb)
         rospy.Subscriber('panda1/joint_states', JointState, self.joint_state_cb)
         
         # subscribe to corners
-        rospy.Subscriber('corner1', Float64, self.corner1_cb)
-        rospy.Subscriber('corner2', Float64, self.corner2_cb)
-        rospy.Subscriber('corner3', Float64, self.corner3_cb)
-        rospy.Subscriber('corner4', Float64, self.corner4_cb)
+        rospy.Subscriber('/aruco_single/corner1', PointStamped, self.corner1_cb)
+        rospy.Subscriber('/aruco_single/corner2', PointStamped, self.corner2_cb)
+        rospy.Subscriber('/aruco_single/corner3', PointStamped, self.corner3_cb)
+        rospy.Subscriber('/aruco_single/corner4', PointStamped, self.corner4_cb)
 
-        pub_q1_vel = rospy.Publisher('/panda1/panda_joint1_controller/command', Float64, queue_size=10)
-        pub_q2_vel = rospy.Publisher('/panda1/panda_joint2_controller/command', Float64, queue_size=10)
-        pub_q3_vel = rospy.Publisher('/panda1/panda_joint3_controller/command', Float64, queue_size=10)
-        pub_q4_vel = rospy.Publisher('/panda1/panda_joint4_controller/command', Float64, queue_size=10)
-        pub_q5_vel = rospy.Publisher('/panda1/panda_joint5_controller/command', Float64, queue_size=10)
-        pub_q6_vel = rospy.Publisher('/panda1/panda_joint6_controller/command', Float64, queue_size=10)
-        pub_q7_vel = rospy.Publisher('/panda1/panda_joint7_controller/command', Float64, queue_size=10)
+        self.pub_q1_vel = rospy.Publisher('/panda1/panda_joint1_controller/command', Float64, queue_size=10)
+        self.pub_q2_vel = rospy.Publisher('/panda1/panda_joint2_controller/command', Float64, queue_size=10)
+        self.pub_q3_vel = rospy.Publisher('/panda1/panda_joint3_controller/command', Float64, queue_size=10)
+        self.pub_q4_vel = rospy.Publisher('/panda1/panda_joint4_controller/command', Float64, queue_size=10)
+        self.pub_q5_vel = rospy.Publisher('/panda1/panda_joint5_controller/command', Float64, queue_size=10)
+        self.pub_q6_vel = rospy.Publisher('/panda1/panda_joint6_controller/command', Float64, queue_size=10)
+        self.pub_q7_vel = rospy.Publisher('/panda1/panda_joint7_controller/command', Float64, queue_size=10)
 
         rospy.Timer(rospy.Duration(0.1), self.controller_cb)
 
@@ -87,7 +87,7 @@ class VisualServoing:
                          [0, 0, pi/2, self.joint_angles[5]],
                          [0.088, 0, pi/2, self.joint_angles[6]]]
 
-        a = []
+        ais = []
         transformations = []        
         for dh_parameter in dh_parameters:
             a, d, alpha, theta = dh_parameter[0], dh_parameter[1], dh_parameter[2], dh_parameter[3] 
@@ -96,7 +96,7 @@ class VisualServoing:
                            [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
                            [0, np.sin(alpha), np.cos(alpha), d],
                            [0, 0, 0, 1]])
-            a.append(ai)
+            ais.append(ai)
             if len(transformations):
                 transformations.append(np.dot(transformations[-1], ai))
             else:
@@ -108,13 +108,13 @@ class VisualServoing:
                          [0, 0, 0, -1.57, 0, -1.57]]
         
         for xyzrpy in camera_xyzrpy:
-            x, y, z, R, P, Y = xyzrpy[0], xyzrpy[1], xyzrpy[2], xyzrpy[3], xyzrpy[4], xyzrpy[5]
+            x, y, z, X, Y, Z = xyzrpy[0], xyzrpy[1], xyzrpy[2], xyzrpy[3], xyzrpy[4], xyzrpy[5]
             cam_t = np.array([[np.cos(Y)*np.cos(Z), np.sin(X)*np.sin(Y)*np.cos(Z) - np.cos(X)*np.sin(Z), np.cos(X)*np.sin(Y)*np.cos(Z) + np.sin(X)*np.sin(Z), x],
                               [np.cos(Y)*np.sin(Z), np.sin(X)*np.sin(Y)*np.sin(Z) + np.cos(X)*np.cos(Z), np.cos(X)*np.sin(Y)*np.sin(Z) - np.sin(X)*np.cos(Z), y],
                               [-np.sin(Y), np.sin(X)*np.cos(Y), np.cos(X)*np.cos(Y), z],
                               [0, 0, 0, 1]])
 
-            a.append(cam_t)
+            ais.append(cam_t)
             transformations.append(np.dot(transformations[-1], cam_t))
         
         # Calculate feature jacobian
@@ -133,19 +133,24 @@ class VisualServoing:
         for i in range(len(dh_parameters)):
             if i == 0:
                 joint_av = np.array([[0],[0],[1]])
-                joint_lv = np.cross(np.array([[0],[0],[1]]), np.array([[transformations[len(dh_parameters) - 1][0][3]],[transformations[len(dh_parameters) - 1][1][3]],[transformations[len(dh_parameters) - 1][2][3]]]), axis=0)
+                joint_lv = np.cross(np.array([[0],[0],[1]]), np.array([[transformations[len(transformations) - 1][0][3]],
+                                    [transformations[len(transformations) - 1][1][3]], [transformations[len(transformations) - 1][2][3]]]), axis=0)
                 
                 joint_jacobain = np.vstack((joint_lv,joint_av))
+                robot_jacobian = joint_jacobain
 
             else:                                
-                joint_av = np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]])
-                joint_lv = np.cross(np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]]), np.array([[transformations[len(dh_parameters) - 1][0][3]],[transformations[len(dh_parameters) - 1][1][3]],[v[2][3]]]) - np.array([[transformations[i][0][3]],[transformations[i][1][3]],[transformations[i][2][3]]]), axis=0)
+                joint_av = np.array([[transformations[i - 1][0][2]], [transformations[i - 1][1][2]], [transformations[i - 1][2][2]]])
+                joint_lv = np.cross(np.array([[transformations[i - 1][0][3]],[transformations[i - 1][1][3]], [transformations[i - 1][2][3]]]), 
+                                    np.array([[transformations[len(transformations) - 1][0][3]], [transformations[len(transformations) - 1][1][3]],
+                                              [transformations[len(transformations) - 1][2][3]]]) - np.array([[transformations[i - 1][0][3]], [transformations[i - 1][1][3]],
+                                              [transformations[i - 1][2][3]]]), axis=0)
 
                 joint_jacobain = np.vstack((joint_lv,joint_av))
                 robot_jacobian = np.hstack((robot_jacobian, joint_jacobain))
 
         # Control law
-        lam = 0.01
+        lam = 0.001
         lam_mat = np.eye(6)*lam
 
         error = np.array([[self.corners[0][0] - self.reference_corners[0][0]],
@@ -163,16 +168,18 @@ class VisualServoing:
         # reference_cartesian_velocities: 6x1  
         # robot_jacobian: 6x7
         # input_joint_velocities: 7x1   
-        reference_cartesian_velocities = np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
+        reference_cartesian_velocities = -np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
         input_joint_velocities = np.dot(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
 
-        pub_q1_vel.publish(input_joint_velocities[0])
-        pub_q2_vel.publish(input_joint_velocities[1])
-        pub_q3_vel.publish(input_joint_velocities[2])
-        pub_q4_vel.publish(input_joint_velocities[3])
-        pub_q5_vel.publish(input_joint_velocities[4])
-        pub_q6_vel.publish(input_joint_velocities[5])
-        pub_q7_vel.publish(input_joint_velocities[6])
+        self.pub_q1_vel.publish(input_joint_velocities[0])
+        self.pub_q2_vel.publish(input_joint_velocities[1])
+        self.pub_q3_vel.publish(input_joint_velocities[2])
+        self.pub_q4_vel.publish(input_joint_velocities[3])
+        self.pub_q5_vel.publish(input_joint_velocities[4])
+        self.pub_q6_vel.publish(input_joint_velocities[5])
+        self.pub_q7_vel.publish(input_joint_velocities[6])
+        print(input_joint_velocities, error)
 
 if __name__ == "__main__":
-    pass
+    vs = VisualServoing()
+    rospy.spin()
