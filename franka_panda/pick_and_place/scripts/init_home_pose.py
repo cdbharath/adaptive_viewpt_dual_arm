@@ -33,7 +33,7 @@ if __name__ == "__main__":
         rospy.loginfo("Service Call Failed")	
 
 
-    joint1.publish(-1.2855552287447114)
+    joint1.publish(-1.6855552287447114)
     joint2.publish(-0.8900155883125755)
     joint3.publish(1.1781403402713089)
     joint4.publish(-2.037701347149067)

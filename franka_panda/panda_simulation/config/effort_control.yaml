@@ -100,31 +100,31 @@
     panda_joint1_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint1
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint2_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint2
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint3_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint3
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint4_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint4
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint5_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint5
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint6_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint6
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
     panda_joint7_pcontroller:
         type: velocity_controllers/JointPositionController
         joint: panda_joint7
-        pid: { p: 100, d: 10.0, i: 0, i_clamp: 1 }
+        pid: { p: 1000, d: 100.0, i: 0, i_clamp: 1 }
 
     panda_finger1_controller:
         type: effort_controllers/JointPositionController
