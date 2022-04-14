@@ -104,7 +104,7 @@ class VisualServoing:
         
         # Camera transformation
         # Transformations in order xyzrpy
-        camera_xyzrpy = [[0.05, -0.05, 0, -1.57, -1.57, -0.789], 
+        camera_xyzrpy = [[0.06, 0.00, 0, -1.57, -1.57, -0.0], 
                          [0, 0, 0, -1.57, 0, -1.57]]
         
         for xyzrpy in camera_xyzrpy:
@@ -150,7 +150,7 @@ class VisualServoing:
                 robot_jacobian = np.hstack((robot_jacobian, joint_jacobain))
 
         # Control law
-        lam = 0.001
+        lam = 0.0001
         lam_mat = np.eye(6)*lam
 
         error = np.array([[self.corners[0][0] - self.reference_corners[0][0]],
@@ -168,7 +168,7 @@ class VisualServoing:
         # reference_cartesian_velocities: 6x1  
         # robot_jacobian: 6x7
         # input_joint_velocities: 7x1   
-        reference_cartesian_velocities = -np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
+        reference_cartesian_velocities = np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
         input_joint_velocities = np.dot(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
 
         self.pub_q1_vel.publish(input_joint_velocities[0])

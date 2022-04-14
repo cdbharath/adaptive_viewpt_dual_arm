@@ -40,7 +40,7 @@ if __name__ == "__main__":
     joint5.publish(0.801004954856599)
     joint6.publish(1.5885867163382619)
     joint7.publish(0.17028892513511007)
-    rospy.sleep(1)
+    rospy.sleep(5)
 
     rospy.wait_for_service('/panda1/controller_manager/switch_controller')
     try:
