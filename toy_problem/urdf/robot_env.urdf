@@ -1,0 +1,163 @@
+<robot name="robot_env">
+
+    <link name="world"/>
+
+    <joint name="world_to_base_link" type="fixed">
+      <origin xyz="0.8 0 0" rpy="0 0 0"/>
+      <parent link="world"/>
+      <child link="base"/>
+    </joint>
+
+    <link name="base">
+      <inertial>
+        <origin xyz="0 0 0" />
+        <mass value="1.0" />
+        <inertia  ixx="0.010" ixy="0.0"  ixz="0.0"  iyy="0.010"  iyz="0.0"  izz="0.010" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0.0"/>
+        <geometry>
+          <box size="0.3 0.3 0.01" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.0"/>
+        <geometry>
+          <box size="0.3 0.3 0.01" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="joint1" type="fixed">
+      <origin xyz="-0.075 -0.075 0.025"/>
+      <parent link="base"/>
+      <child link="yellow_object"/>
+    </joint>
+
+    <link name="yellow_object">
+      <inertial>
+        <!-- <origin xyz="-0.075 -0.075 0" /> -->
+        <origin xyz="0 0 0" />
+        <mass value="1.0" />
+        <inertia  ixx="0.10" ixy="0.0"  ixz="0.0"  iyy="0.10"  iyz="0.0"  izz="0.10" />
+      </inertial>
+      <visual>
+        <!-- <origin xyz="-0.075 -0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </visual>
+      <collision>
+        <!-- <origin xyz="0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="joint2" type="fixed">
+      <origin xyz="-0.075 0.075 0.025" />
+      <parent link="base"/>
+      <child link="red_object"/>
+    </joint>
+
+    <link name="red_object">
+      <inertial>
+        <!-- <origin xyz="-0.075 0.075 0" /> -->
+        <origin xyz="0 0 0" />
+        <mass value="1.0" />
+        <inertia  ixx="0.10" ixy="0.0"  ixz="0.0"  iyy="0.10"  iyz="0.0"  izz="0.10" />
+      </inertial>
+      <visual>
+        <!-- <origin xyz="-0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </visual>
+      <collision>
+        <!-- <origin xyz="0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="joint3" type="fixed">
+      <origin xyz="0.075 -0.075 0.025" />
+      <parent link="base"/>
+      <child link="blue_object"/>
+    </joint>
+
+    <link name="blue_object">
+      <inertial>
+        <!-- <origin xyz="0.075 -0.075 0" /> -->
+        <origin xyz="0 0 0" />
+        <mass value="1.0" />
+        <inertia  ixx="0.10" ixy="0.0"  ixz="0.0"  iyy="0.10"  iyz="0.0"  izz="0.10" />
+      </inertial>
+      <visual>
+        <!-- <origin xyz="0.075 -0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </visual>
+      <collision>
+        <!-- <origin xyz="0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="joint4" type="fixed">
+      <origin xyz="0.075 0.075 0.025" />
+      <parent link="base"/>
+      <child link="green_object"/>
+    </joint>
+
+    <link name="green_object">
+      <inertial>
+        <!-- <origin xyz="0.075 0.075 0" /> -->
+        <origin xyz="0 0 0" />
+        <mass value="1.0" />
+        <inertia  ixx="0.10" ixy="0.0"  ixz="0.0"  iyy="0.10"  iyz="0.0"  izz="0.10" />
+      </inertial>
+      <visual>
+        <!-- <origin xyz="0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </visual>
+      <collision>
+        <!-- <origin xyz="0.075 0.075 0.025"/> -->
+        <origin xyz="0 0 0" />
+        <geometry>
+          <cylinder length="0.05" radius="0.02"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <gazebo reference="my_box">
+      <material>Gazebo/White</material>
+    </gazebo>
+    <gazebo reference="green_object">
+      <material>Gazebo/Green</material>
+    </gazebo>
+    <gazebo reference="red_object">
+      <material>Gazebo/Red</material>
+    </gazebo>
+    <gazebo reference="blue_object">
+      <material>Gazebo/Blue</material>
+    </gazebo>
+    <gazebo reference="yellow_object">
+      <material>Gazebo/Purple</material>
+    </gazebo>
+
+  </robot>
