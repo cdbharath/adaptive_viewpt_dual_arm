@@ -13,7 +13,7 @@ from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from math import pi
 from geometry_msgs.msg import PointStamped
-
+from core import JacobianBody
 
 class VisualServoing:
     def __init__(self):
@@ -24,7 +24,7 @@ class VisualServoing:
         self.corners = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
 
         # give a proper value
-        self.reference_corners = np.array([[609.0, 632.0], [603.0, 572.0], [663.0, 566.0], [670.0, 625.0]])
+        self.reference_corners = np.array([[637.0, 572.0], [599.0, 600.0], [591.0, 573.0], [630.0, 580.0]])
         self.image = None
 
         rospy.Subscriber('/panda_camera/rgb/image_raw', Image, self.image_cb)
@@ -128,26 +128,55 @@ class VisualServoing:
         image_jacobian = np.vstack(corner_feature_jacobians)
 
         # Calculate robot jacobian
-        robot_jacobian = None
-
-        for i in range(len(dh_parameters)):
-            if i == 0:
-                joint_av = np.array([[0],[0],[1]])
-                joint_lv = np.cross(np.array([[0],[0],[1]]), np.array([[transformations[len(transformations) - 1][0][3]],
-                                    [transformations[len(transformations) - 1][1][3]], [transformations[len(transformations) - 1][2][3]]]), axis=0)
+        # robot_jacobian = None
+        
+        # for i in range(len(dh_parameters)):
+        #     if i == 0:
+        #         joint_av = np.array([[0],[0],[1]])
+        #         joint_lv = np.cross(np.array([[0],[0],[1]]), np.array([[transformations[len(transformations) - 1][0][3]],
+        #                             [transformations[len(transformations) - 1][1][3]], [transformations[len(transformations) - 1][2][3]]]), axis=0)
                 
-                joint_jacobain = np.vstack((joint_lv,joint_av))
-                robot_jacobian = joint_jacobain
+        #         joint_jacobain = np.vstack((joint_lv,joint_av))
+        #         robot_jacobian = joint_jacobain
 
-            else:                                
-                joint_av = np.array([[transformations[i - 1][0][2]], [transformations[i - 1][1][2]], [transformations[i - 1][2][2]]])
-                joint_lv = np.cross(np.array([[transformations[i - 1][0][3]],[transformations[i - 1][1][3]], [transformations[i - 1][2][3]]]), 
-                                    np.array([[transformations[len(transformations) - 1][0][3]], [transformations[len(transformations) - 1][1][3]],
-                                              [transformations[len(transformations) - 1][2][3]]]) - np.array([[transformations[i - 1][0][3]], [transformations[i - 1][1][3]],
-                                              [transformations[i - 1][2][3]]]), axis=0)
+        #     else:                                
+        #         joint_av = np.array([[transformations[i - 1][0][2]], [transformations[i - 1][1][2]], [transformations[i - 1][2][2]]])
+        #         joint_lv = np.cross(np.array([[transformations[i - 1][0][3]],[transformations[i - 1][1][3]], [transformations[i - 1][2][3]]]), 
+        #                             np.array([[transformations[len(transformations) - 1][0][3]], [transformations[len(transformations) - 1][1][3]],
+        #                                       [transformations[len(transformations) - 1][2][3]]]) - np.array([[transformations[i - 1][0][3]], [transformations[i - 1][1][3]],
+        #                                       [transformations[i - 1][2][3]]]), axis=0)
 
-                joint_jacobain = np.vstack((joint_lv,joint_av))
-                robot_jacobian = np.hstack((robot_jacobian, joint_jacobain))
+        #         joint_jacobain = np.vstack((joint_lv,joint_av))
+        #         robot_jacobian = np.hstack((robot_jacobian, joint_jacobain))
+
+        # Defining link lengths to be used in screw axes and home configuration
+        L1 = 0.333
+        L2 = 0.316
+        L3 = 0.0825
+        L4 = 0.384
+        L5 = 0.088 
+        L6 = 0.107
+
+        # Calculate the forward kinematics using the Product of Exponentials
+        # Let us calculate the screw axis for each joint
+        # Put all the axes into a 6xn matrix S, where n is the number of joints
+        # screw_axis = np.array([[0, 0, 1, 0, 0, 0],
+        #                         [0, 1, 0, -L1, 0, 0],
+        #                         [0, 0, 1, 0, 0, 0],
+        #                         [0, -1, 0, (L1+L2), 0, -L3],
+        #                         [0, 0, 1, 0, 0, 0],
+        #                         [0, -1, 0, (L1+L2+L4), 0, 0],
+        #                         [0, 0, -1, 0, L5, 0]])
+
+        screw_axis = np.array([[0, 0, 1, 0, 0, 0],
+                                [0, 1, 0, -L1, 0, 0],
+                                [0, 0, 1, 0, 0, 0],
+                                [0, -1, 0, (L1+L2), 0, -L4],
+                                [0, 0, 1, 0, 0, 0],
+                                [0, -1, 0, (L1+L2+L4), 0, 0],
+                                [0, 0, -1, 0, L4, 0]])
+
+        robot_jacobian = JacobianBody(screw_axis.T, self.joint_angles)
 
         # Control law
         lam = 0.0001
@@ -169,6 +198,7 @@ class VisualServoing:
         # robot_jacobian: 6x7
         # input_joint_velocities: 7x1   
         reference_cartesian_velocities = np.dot(lam_mat, np.dot(np.linalg.pinv(image_jacobian), error))
+        reference_cartesian_velocities = np.array([[0.1, 0, 0, 0, 0, 0]]).T
         input_joint_velocities = np.dot(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
 
         self.pub_q1_vel.publish(input_joint_velocities[0])
@@ -178,7 +208,7 @@ class VisualServoing:
         self.pub_q5_vel.publish(input_joint_velocities[4])
         self.pub_q6_vel.publish(input_joint_velocities[5])
         self.pub_q7_vel.publish(input_joint_velocities[6])
-        print(input_joint_velocities, error)
+        # print(input_joint_velocities, error)
 
 if __name__ == "__main__":
     vs = VisualServoing()
