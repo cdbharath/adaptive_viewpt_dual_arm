@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Author: Bharath Kumar Ramesh Babu
 # Email: brameshbabu@wpi.edu
@@ -14,10 +14,10 @@ from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from cvxopt import matrix, solvers
 
-cv2.namedWindow('draw frame',cv2.WND_PROP_FULLSCREEN)
-cv2.setWindowProperty('draw frame', cv2.WND_PROP_FULLSCREEN, cv2.WND_PROP_FULLSCREEN)
+# cv2.namedWindow('draw frame',cv2.WND_PROP_FULLSCREEN)
+# cv2.setWindowProperty('draw frame', cv2.WND_PROP_FULLSCREEN, cv2.WND_PROP_FULLSCREEN)
 
-def find_center(img, color,draw_frame):
+def find_center(img, color):
     ##########
     # The algorithm from homework 3
     # Convert the image to hsv
@@ -42,19 +42,19 @@ def find_center(img, color,draw_frame):
         high_thresh = np.array([200, 255, 255])
 
     mask = cv2.inRange(img_hsv, low_thresh, high_thresh)
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
 
-    cv2.drawContours(draw_frame, contours, 0, (0, 0, 0), 2)
+    cv2.drawContours(img_hsv, contours, 0, (0, 0, 0), 2)
 
     M = cv2.moments(contours[0])
 
     center = [int(round(M['m10'] / M['m00'])), int(round(M['m01'] / M['m00']))]
     # rospy.loginfo('The center of %s object %s, %s', color, center[0], center[1])
     
-    # cv2.circle(draw_frame, (center[0], center[1]), 5, (255, 255, 255), -1)
+    cv2.circle(img_hsv, (center[0], center[1]), 5, (255, 255, 255), -1)
 
     # img_rgb = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
-    return center, draw_frame
+    return center, img_hsv
 
 def joint_state_cb(data):
     global joint_angles
@@ -65,17 +65,18 @@ def detect_image_cb(data):
     # Receive image from rostopic
     # Convert to opencv datatype
     ##########
-    global joint_angles, green_x_pub, green_y_pub, pink_x_pub, pink_y_pub, red_x_pub, red_y_pub, blue_x_pub, blue_y_pub, init_time
+    global joint_angles, green_x_pub, green_y_pub, pink_x_pub, pink_y_pub, red_x_pub, red_y_pub, blue_x_pub, blue_y_pub, init_time, pub_q1_vel, pub_q2_vel, image_pub, frame_count, prev_coords
+    frame_count = frame_count + 1
     curr_time = rospy.Time.now()
     time_diff = curr_time-init_time
     
     img = bridge.imgmsg_to_cv2(data, desired_encoding="rgb8")
-    draw_frame = img
-    
-    red_center, draw_frame = find_center(img, 'red',draw_frame)
-    blue_center, draw_frame = find_center(img, 'blue',draw_frame)
-    green_center, draw_frame = find_center(img, 'green',draw_frame)
-    pink_center, draw_frame = find_center(img, 'pink',draw_frame)
+    visualize = img.copy()
+
+    red_center, red_obj = find_center(img, 'red')
+    blue_center, blue_obj = find_center(img, 'blue')
+    green_center, green_obj = find_center(img, 'green')
+    pink_center, pink_obj = find_center(img, 'pink')
         
     # Displays the output of object segmentation
     # cv2.imshow('red_object', red_obj)
@@ -83,23 +84,42 @@ def detect_image_cb(data):
     # cv2.imshow('green_object', green_obj)
     # cv2.imshow('pink_object', pink_obj)
     # cv2.imshow('original frame', img)
-    cv2.imshow('draw frame', draw_frame)
-    key = cv2.waitKey(1)
+    # key = cv2.waitKey(1)
     
     # feature references 1 - [green: (63, 187), pink: (121, 218), red: (107, 174), blue: (77, 231)], joint ref - [joint1 0.2, joint2 0.1]
     # feature references 3 - [green: (191, 173), pink: (221, 231), red: (235, 187), blue: (178, 217)] - [joint1 -0.2, joint2 -0.1]
     # feature references 2 - [green: (126, 169), pink: (172, 215), red: (173, 169), blue: (127, 215)] - [joint1 0.0, joint2 0.0]
-
-    # Visual servoing
-    pub_q1_vel = rospy.Publisher('/vbmbot/joint1_velocity_controller/command', Float64, queue_size=10)
-    pub_q2_vel = rospy.Publisher('/vbmbot/joint2_velocity_controller/command', Float64, queue_size=10)
     
     # reference_features = [[63, 187], [121, 218], [107, 174], [77, 231]]      #[green, pink, red, blue]
     # reference_features = [[191, 173], [221, 231], [235, 187], [178, 217]]      #[green, pink, red, blue]
     reference_features = [[126, 169], [172, 215], [173, 169], [127, 215]]      #[green, pink, red, blue]
     
-    l1 = 0.5;
-    l2 = 0.5;
+    visualize = cv2.circle(visualize, tuple(reference_features[0]), 4, (0, 0, 0), -1)
+    visualize = cv2.circle(visualize, tuple(reference_features[1]), 4, (0, 0, 0), -1)
+    visualize = cv2.circle(visualize, tuple(reference_features[2]), 4, (0, 0, 0), -1)
+    visualize = cv2.circle(visualize, tuple(reference_features[3]), 4, (0, 0, 0), -1)
+
+    visualize = cv2.circle(visualize, tuple(red_center), 4, (255, 255, 255), -1)
+    visualize = cv2.circle(visualize, tuple(blue_center), 4, (255, 255, 255), -1)
+    visualize = cv2.circle(visualize, tuple(green_center), 4, (255, 255, 255), -1)
+    visualize = cv2.circle(visualize, tuple(pink_center), 4, (255, 255, 255), -1)
+
+    if frame_count > 1:
+        for i in range(1, len(prev_coords[0])):
+            visualize = cv2.line(visualize, tuple(prev_coords[0][i - 1]), tuple(prev_coords[0][i]), (0,191,255), 2)
+            visualize = cv2.line(visualize, tuple(prev_coords[1][i - 1]), tuple(prev_coords[1][i]), (0,191,255), 2)
+            visualize = cv2.line(visualize, tuple(prev_coords[2][i - 1]), tuple(prev_coords[2][i]), (0,191,255), 2)
+            visualize = cv2.line(visualize, tuple(prev_coords[3][i - 1]), tuple(prev_coords[3][i]), (0,191,255), 2)
+
+    prev_coords[0].append(list(green_center))
+    prev_coords[1].append(list(pink_center)) 
+    prev_coords[2].append(list(red_center)) 
+    prev_coords[3].append(list(blue_center)) 
+
+    image_pub.publish(bridge.cv2_to_imgmsg(visualize, encoding='rgb8'))
+
+    l1 = 0.5
+    l2 = 0.5
         
     a1 = np.array([[np.cos(joint_angles[0]), -np.sin(joint_angles[0]), 0, l1*np.cos(joint_angles[0])],
                    [np.sin(joint_angles[0]),  np.cos(joint_angles[0]), 0, l1*np.sin(joint_angles[0])],
@@ -130,7 +150,7 @@ def detect_image_cb(data):
     image_jacobian = np.array(np.vstack((green_feature_jacobian, pink_feature_jacobian, red_feature_jacobian, blue_feature_jacobian)))
   
     # A matrix (16x6)
-    A = np.transpose(np.array(np.hstack((np.transpose(image_jacobian), -1* np.transpose(image_jacobian)))))
+    # A = np.transpose(np.array(np.hstack((np.transpose(image_jacobian), -1* np.transpose(image_jacobian)))))
     
     joint1_lv = np.cross(np.array([[0],[0],[1]]), np.array([[t0_2[0][3]],[t0_2[1][3]],[t0_2[2][3]]]), axis=0)
     joint1_av = np.array([[0],[0],[1]])
@@ -183,6 +203,8 @@ if __name__ == "__main__":
     rospy.loginfo('init time %s', rospy.Time.now())
     
     bridge = CvBridge()
+    frame_count = 0
+    prev_coords = [[], [], [], []]
     joint_angles = np.array([0, 0])
     green_x_pub = rospy.Publisher('/vbmbot/green_x', Float64 ,queue_size=10)
     green_y_pub = rospy.Publisher('/vbmbot/green_y', Float64 ,queue_size=10)
@@ -192,6 +214,12 @@ if __name__ == "__main__":
     red_y_pub = rospy.Publisher('/vbmbot/red_y', Float64 ,queue_size=10)
     blue_x_pub = rospy.Publisher('/vbmbot/blue_x', Float64 ,queue_size=10)
     blue_y_pub = rospy.Publisher('/vbmbot/blue_y', Float64 ,queue_size=10)
+
+    # Visual servoing
+    pub_q1_vel = rospy.Publisher('/vbmbot/joint1_velocity_controller/command', Float64, queue_size=10)
+    pub_q2_vel = rospy.Publisher('/vbmbot/joint2_velocity_controller/command', Float64, queue_size=10)
+
+    image_pub = rospy.Publisher('/visualization', Image, queue_size=10)
 
     rospy.Subscriber('/vbmbot/camera1/image_raw', Image, detect_image_cb)
     rospy.Subscriber('/vbmbot/joint_states', JointState, joint_state_cb)
