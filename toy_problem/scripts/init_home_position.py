@@ -24,9 +24,31 @@ if __name__ == "__main__":
         except rospy.ServiceException as e:
             rospy.loginfo("Service Call Failed")	
 
-        joint1p.publish(0.5)
-        joint2p.publish(-0.25)
+        # case 1
+
+        # joint1p.publish(0.67)
+        # joint2p.publish(-1.17)
+
+        # joint1p.publish(-1.27)
+        # joint2p.publish(1.47)
+
+        # case 2
+         
+        # joint1p.publish(0.5)
+        # joint2p.publish(-0.2)
+        # rospy.sleep(5)
+
+        joint1p.publish(-0.7)
+        joint2p.publish(1.47)
+        rospy.sleep(2.5)
+
+        joint1p.publish(-1.07)
+        joint2p.publish(1.20)
         rospy.sleep(5)
+
+        # joint1p.publish(-1.27)
+        # joint2p.publish(1.47)
+        # rospy.sleep(5)
 
         rospy.wait_for_service('/vbmbot/controller_manager/switch_controller')
         try:
@@ -41,4 +63,4 @@ if __name__ == "__main__":
         except rospy.ServiceException as e:
             rospy.loginfo("Service Call Failed")	
         
-        rospy.spin()        
+        # rospy.spin()        

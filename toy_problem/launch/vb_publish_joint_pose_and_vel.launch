@@ -16,7 +16,8 @@
       -J joint2 0
       -unpause" />
 
-    <node name="spawn_robot_env" pkg="gazebo_ros" type="spawn_model" args="-file $(find toy_problem)/urdf/robot_env.urdf -urdf -z 0 -model robot_env" />
+    <!-- <node name="spawn_robot_env" pkg="gazebo_ros" type="spawn_model" args="-file $(find toy_problem)/urdf/robot_env.urdf -urdf -x -0.25 -z 0 -model robot_env" /> -->
+    <node name="spawn_robot_env" pkg="gazebo_ros" type="spawn_model" args="-file $(find toy_problem)/urdf/robot_env.urdf -urdf -x -0.1 -z 0 -model robot_env" />
     
     <!-- Launch controller for robot joints -->
     <rosparam file="$(find toy_problem)/config/config.yaml" command="load"/>

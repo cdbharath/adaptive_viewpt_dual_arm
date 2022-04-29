@@ -2,7 +2,6 @@
 
 # Author: Bharath Kumar Ramesh Babu
 # Email: brameshbabu@wpi.edu
-# Vision Based Robotic Manipulation homework 4
 
 import rospy
 from rospy.core import loginfo
@@ -51,10 +50,10 @@ def find_center(img, color):
     center = [int(round(M['m10'] / M['m00'])), int(round(M['m01'] / M['m00']))]
     # rospy.loginfo('The center of %s object %s, %s', color, center[0], center[1])
     
-    cv2.circle(img_hsv, (center[0], center[1]), 5, (255, 255, 255), -1)
+    # cv2.circle(img_hsv, (center[0], center[1]), 5, (255, 255, 255), -1)
 
-    # img_rgb = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
-    return center, img_hsv
+    img_rgb = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
+    return center, img_rgb
 
 def joint_state_cb(data):
     global joint_angles
@@ -92,7 +91,10 @@ def detect_image_cb(data):
     
     # reference_features = [[63, 187], [121, 218], [107, 174], [77, 231]]      #[green, pink, red, blue]
     # reference_features = [[191, 173], [221, 231], [235, 187], [178, 217]]      #[green, pink, red, blue]
-    reference_features = [[126, 169], [172, 215], [173, 169], [127, 215]]      #[green, pink, red, blue]
+    # reference_features = [[126, 169], [172, 215], [173, 169], [127, 215]]      #[green, pink, red, blue]
+
+    # reference_features = [[226, 126], [277, 158], [267, 117], [236, 168]]      #[green, pink, red, blue]
+    reference_features = [[215, 83], [265, 114], [257, 73], [225, 124]]      #[green, pink, red, blue]
     
     visualize = cv2.circle(visualize, tuple(reference_features[0]), 4, (0, 0, 0), -1)
     visualize = cv2.circle(visualize, tuple(reference_features[1]), 4, (0, 0, 0), -1)
@@ -118,8 +120,8 @@ def detect_image_cb(data):
 
     image_pub.publish(bridge.cv2_to_imgmsg(visualize, encoding='rgb8'))
 
-    l1 = 0.5
-    l2 = 0.5
+    l1 = 0.5 - 0.05
+    l2 = 0.5 - 0.05
         
     a1 = np.array([[np.cos(joint_angles[0]), -np.sin(joint_angles[0]), 0, l1*np.cos(joint_angles[0])],
                    [np.sin(joint_angles[0]),  np.cos(joint_angles[0]), 0, l1*np.sin(joint_angles[0])],
@@ -148,10 +150,7 @@ def detect_image_cb(data):
                                        [0, -1/z, blue_center[1]/z, 1+blue_center[1]*blue_center[1], -blue_center[0]*blue_center[1], -blue_center[0]]])
      
     image_jacobian = np.array(np.vstack((green_feature_jacobian, pink_feature_jacobian, red_feature_jacobian, blue_feature_jacobian)))
-  
-    # A matrix (16x6)
-    # A = np.transpose(np.array(np.hstack((np.transpose(image_jacobian), -1* np.transpose(image_jacobian)))))
-    
+      
     joint1_lv = np.cross(np.array([[0],[0],[1]]), np.array([[t0_2[0][3]],[t0_2[1][3]],[t0_2[2][3]]]), axis=0)
     joint1_av = np.array([[0],[0],[1]])
     joint2_lv = np.cross(np.array([[t0_1[0][3]],[t0_1[1][3]],[t0_1[2][3]]]), \
@@ -174,16 +173,13 @@ def detect_image_cb(data):
 
 
     reference_cartesian_velocities = np.matmul(lam_mat, np.matmul(np.linalg.pinv(image_jacobian), error))
-    input_joint_velocities = np.matmul(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
+    input_joint_velocities = -np.matmul(np.linalg.pinv(robot_jacobian), reference_cartesian_velocities)
 
     if(rospy.Duration(5) < time_diff):
         rospy.loginfo('controller started')
-        pub_q1_vel.publish(input_joint_velocities[0])
-        pub_q2_vel.publish(input_joint_velocities[1])
-        pass
+        # pub_q1_vel.publish(input_joint_velocities[0])
+        # pub_q2_vel.publish(input_joint_velocities[1])
 
-    # pub_q1_vel.publish(input_joint_velocities[0])
-    # pub_q2_vel.publish(input_joint_velocities[1])    
 
     green_x_pub.publish(green_center[0])
     green_y_pub.publish(green_center[1])
@@ -194,6 +190,7 @@ def detect_image_cb(data):
     blue_x_pub.publish(blue_center[0])
     blue_y_pub.publish(blue_center[1])
     
+    print(red_center, blue_center, green_center, pink_center)
 
 if __name__ == "__main__":
     rospy.init_node('detect_features_node')
