@@ -5,7 +5,7 @@
     <arg name="gui" default="true" />
     <arg name="headless" default="false" />
     <arg name="debug" default="false" />
-    <arg name="load_gripper" default="true" />
+    <arg name="load_gripper" default="false" />
 
     <!--launch GAZEBO with own world configuration -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -25,16 +25,22 @@
         <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_camera.urdf.xacro" />
         <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda1" />
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_joint1_controller panda_joint2_controller panda_joint3_controller panda_joint4_controller panda_joint5_controller panda_joint6_controller panda_joint7_controller" />
-        <node name="controller_spawner_position" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped panda_joint1_pcontroller panda_joint2_pcontroller panda_joint3_pcontroller panda_joint4_pcontroller panda_joint5_pcontroller panda_joint6_pcontroller panda_joint7_pcontroller" />
+        <node name="controller_spawner_position" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="stopped panda_joint1_pcontroller panda_joint2_pcontroller panda_joint3_pcontroller panda_joint4_pcontroller panda_joint5_pcontroller panda_joint6_pcontroller panda_joint7_pcontroller" />
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
         <node pkg="controller_manager" type="spawner" name="joint_position_launcher2" args="panda_finger1_controller panda_finger2_controller" />
+        <include file="$(find panda_moveit_config)/launch/planning_context.launch">
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
+        <include file="$(find panda_moveit_config)/launch/move_group.launch">
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
     </group>
 
-    <!-- <group ns="panda2">
+    <group ns="panda2">
         <rosparam file="$(find panda_simulation)/config/effort_control.yaml" command="load" />
         <param name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
-        <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -y 1 -model panda2" />
+        <node name="spawn_panda" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -y 1 -model panda2 -J panda_joint1 0 -J panda_joint2 -0.78 -J panda_joint3 0 -J panda_joint4 -2.35 -J panda_joint5 0 -J panda_joint6 1.57 -J panda_joint7 0.38" />
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_arm_controller"/>
         <node name="controller_spawner1" pkg="controller_manager" type="spawner" args="panda_finger1_controller panda_finger2_controller"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
@@ -45,7 +51,7 @@
             <arg name="load_gripper" value="$(arg load_gripper)" />
         </include>
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
-    </group> -->
+    </group>
 
     <!-- for web interface -->
     <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">

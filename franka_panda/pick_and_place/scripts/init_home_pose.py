@@ -10,16 +10,17 @@ from controller_manager_msgs.srv import SwitchController
 
 if __name__ == "__main__":
     rospy.init_node("init_home_pose")
-    joint1 = rospy.Publisher("/panda1/panda_joint1_pcontroller/command", Float64, queue_size=10)
-    joint2 = rospy.Publisher("/panda1/panda_joint2_pcontroller/command", Float64, queue_size=10)
-    joint3 = rospy.Publisher("/panda1/panda_joint3_pcontroller/command", Float64, queue_size=10)
-    joint4 = rospy.Publisher("/panda1/panda_joint4_pcontroller/command", Float64, queue_size=10)
-    joint5 = rospy.Publisher("/panda1/panda_joint5_pcontroller/command", Float64, queue_size=10)
-    joint6 = rospy.Publisher("/panda1/panda_joint6_pcontroller/command", Float64, queue_size=10)
-    joint7 = rospy.Publisher("/panda1/panda_joint7_pcontroller/command", Float64, queue_size=10)      
+    robot = "panda2"
+    joint1 = rospy.Publisher("/" + robot + "/panda_joint1_pcontroller/command", Float64, queue_size=10)
+    joint2 = rospy.Publisher("/" + robot + "/panda_joint2_pcontroller/command", Float64, queue_size=10)
+    joint3 = rospy.Publisher("/" + robot + "/panda_joint3_pcontroller/command", Float64, queue_size=10)
+    joint4 = rospy.Publisher("/" + robot + "/panda_joint4_pcontroller/command", Float64, queue_size=10)
+    joint5 = rospy.Publisher("/" + robot + "/panda_joint5_pcontroller/command", Float64, queue_size=10)
+    joint6 = rospy.Publisher("/" + robot + "/panda_joint6_pcontroller/command", Float64, queue_size=10)
+    joint7 = rospy.Publisher("/" + robot + "/panda_joint7_pcontroller/command", Float64, queue_size=10)      
     rospy.sleep(1)
 
-    rospy.wait_for_service('/panda1/controller_manager/switch_controller')
+    rospy.wait_for_service('/' + robot + '/controller_manager/switch_controller')
     try:
         sc_service = rospy.ServiceProxy('/panda1/controller_manager/switch_controller', SwitchController)
         stop_controllers = ['panda_joint1_controller', 'panda_joint2_controller', 'panda_joint3_controller', 'panda_joint4_controller', 'panda_joint5_controller', 'panda_joint6_controller', 'panda_joint7_controller']
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         rospy.loginfo("Service Call Failed")	
 
 
-    joint1.publish(-1.6855552287447114)
+    joint1.publish(-1.60855552287447114)
     joint2.publish(-0.8900155883125755)
     joint3.publish(1.1781403402713089)
     joint4.publish(-2.037701347149067)
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     joint7.publish(0.17028892513511007)
     rospy.sleep(5)
 
-    rospy.wait_for_service('/panda1/controller_manager/switch_controller')
+    rospy.wait_for_service('/' + robot + '/controller_manager/switch_controller')
     try:
         sc_service = rospy.ServiceProxy('/panda1/controller_manager/switch_controller', SwitchController)
         stop_controllers = ['panda_joint1_pcontroller', 'panda_joint2_pcontroller', 'panda_joint3_pcontroller', 'panda_joint4_pcontroller', 'panda_joint5_pcontroller', 'panda_joint6_pcontroller', 'panda_joint7_pcontroller']
@@ -56,4 +57,4 @@ if __name__ == "__main__":
         rospy.loginfo("Service Call Failed")	
 
 
-    rospy.spin()
+    # rospy.spin()
