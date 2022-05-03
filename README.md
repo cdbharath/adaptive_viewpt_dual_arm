@@ -1,5 +1,8 @@
-# adaptive_viewpt_dual_arm
+# Occlusion Free Visual Servoing for Dual Arm Robots
 
 Motion Planning Course Project (Worcester Polytechnic Institute)
 
-Refer [Franka Panda](https://github.com/cdbharath/franka_panda "Franka Panda") repository for the manipulation pipeline used in this project.
+Team Members:
+1. Bharath Kumar Ramesh Babu
+2. Akshay Kumar Harikrishnan
+3. Harishkumar Ramadhas
